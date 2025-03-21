@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 const Profile = ({ username }) => {
   // Load saved profile from localStorage (if any) or initialize default
@@ -66,7 +67,26 @@ const Profile = ({ username }) => {
           style={styles.input}
         />
       </div>
+      <div style={styles.profileSection}>
+        <label>Theme:</label>
+        <select 
+          name="theme" 
+          value={profileInfo.theme} 
+          onChange={handleChange} 
+          style={styles.select}
+        >
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </div>
       <button onClick={handleSave} style={styles.button}>Save Profile</button>
+
+      {/* New Community Forum button */}
+      <div style={styles.forumButtonContainer}>
+        <Link to="/community" style={styles.forumButton}>
+          Go to Community Forum
+        </Link>
+      </div>
     </div>
   );
 };
@@ -101,6 +121,19 @@ const styles = {
     border: 'none',
     borderRadius: '5px',
     cursor: 'pointer'
+  },
+  forumButtonContainer: {
+    marginTop: '20px',
+    textAlign: 'center'
+  },
+  forumButton: {
+    display: 'inline-block',
+    padding: '12px 20px',
+    backgroundColor: '#4caf50',
+    color: '#fff',
+    textDecoration: 'none',
+    borderRadius: '5px',
+    fontSize: '16px'
   }
 };
 

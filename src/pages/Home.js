@@ -4,6 +4,7 @@ import axios from 'axios';
 import FaceApiEmotionAnalysis from './FaceApiEmotionAnalysis';
 
 
+
 const Home = ({ username }) => {
   const [entries, setEntries] = useState([]);
   const [expandedIndex, setExpandedIndex] = useState(null);

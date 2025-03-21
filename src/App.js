@@ -1,39 +1,58 @@
 import React, { useState } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
+import { FaHome, FaBook, FaChartBar, FaUser, FaHeartbeat } from 'react-icons/fa';
 import Home from './pages/Home';
 import Journal from './pages/Journal';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
+import Wellness from './pages/Wellness';
+import CommunityForum from './pages/CommunityForum';
 import Login from './pages/Login';
+
 
 function App() {
   const [username, setUsername] = useState('');
 
   return (
-    <div>
-      { !username ? (
-          <Login setUsername={setUsername} />
+    <div style={styles.appContainer}>
+      {!username ? (
+        <Login setUsername={setUsername} />
       ) : (
         <>
-          <header style={styles.header}>
-            <div style={styles.logoContainer}>
-              <h1 style={styles.logo}>EmpowerGuard Journaling</h1>
-            </div>
-            <nav style={styles.nav}>
-              <Link to="/" style={styles.navLink}>Home</Link>
-              <Link to="/journal" style={styles.navLink}>Journal</Link>
-              <Link to="/dashboard" style={styles.navLink}>Dashboard</Link>
-              <Link to="/profile" style={styles.navLink}>Profile</Link>
-            </nav>
-          </header>
           <main style={styles.main}>
             <Routes>
               <Route path="/" element={<Home username={username} />} />
               <Route path="/journal" element={<Journal username={username} />} />
               <Route path="/dashboard" element={<Dashboard username={username} />} />
               <Route path="/profile" element={<Profile username={username} />} />
+              <Route path="/wellness" element={<Wellness username={username} />} />
+              <Route path="/community" element={<CommunityForum />} />
             </Routes>
           </main>
+
+          {/* Bottom fixed nav bar with icons and text */}
+          <nav style={styles.bottomNav}>
+            <Link to="/" style={styles.iconLink}>
+              <FaHome size={24} />
+              <span style={styles.iconLabel}>Home</span>
+            </Link>
+            <Link to="/journal" style={styles.iconLink}>
+              <FaBook size={24} />
+              <span style={styles.iconLabel}>Journal</span>
+            </Link>
+            <Link to="/dashboard" style={styles.iconLink}>
+              <FaChartBar size={24} />
+              <span style={styles.iconLabel}>Dashboard</span>
+            </Link>
+            <Link to="/wellness" style={styles.iconLink}>
+              <FaHeartbeat size={24} />
+              <span style={styles.iconLabel}>Wellness</span>
+            </Link>
+            <Link to="/profile" style={styles.iconLink}>
+              <FaUser size={24} />
+              <span style={styles.iconLabel}>Profile</span>
+            </Link>
+          </nav>
         </>
       )}
     </div>
@@ -41,37 +60,36 @@ function App() {
 }
 
 const styles = {
-  header: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '20px 40px',
-    backgroundColor: '#1976d2',
-    color: '#fff',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-  },
-  logoContainer: {
-    flex: 1
-  },
-  logo: {
-    margin: 0,
-    fontSize: '28px',
-    fontWeight: 'bold'
-  },
-  nav: {
-    display: 'flex',
-    gap: '20px'
-  },
-  navLink: {
-    color: '#fff',
-    textDecoration: 'none',
-    fontSize: '18px',
-    fontWeight: '500'
+  appContainer: {
+    paddingBottom: '60px', // ensures content isn't hidden by fixed nav
+    fontFamily: 'sans-serif',
   },
   main: {
-    padding: '20px'
-  }
+    padding: '20px',
+  },
+  bottomNav: {
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '60px',
+    backgroundColor: '#1976d2',
+    display: 'flex',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  iconLink: {
+    color: '#fff',
+    textDecoration: 'none',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  iconLabel: {
+    fontSize: '12px',
+    marginTop: '4px',
+  },
 };
 
 export default App;

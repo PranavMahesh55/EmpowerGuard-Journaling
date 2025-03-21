@@ -1,108 +1,35 @@
-// Journal.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import axios from 'axios';
-import { analyzeEmotionalTone } from '../backend/emotionalAnalysis';
-import FaceApiEmotionAnalysis from './FaceApiEmotionAnalysis';
-
-
+import { FaMicrophone } from 'react-icons/fa';
+import FaceApiEmotionAnalysis from './FaceApiEmotionAnalysis'; // Ensure this component is implemented
 
 const Journal = ({ username }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [tags, setTags] = useState('');
-  const [date, setDate] = useState(new Date());
-  const [previewMode, setPreviewMode] = useState(false);
-  const [mediaFiles, setMediaFiles] = useState([]);
-  const [geolocation, setGeolocation] = useState(null);
-  const [weather, setWeather] = useState(null);
-  const [emotionResult, setEmotionResult] = useState(null);
-    // New state: store the emotion log (an array of detected emotions)
-    const [emotionLog, setEmotionLog] = useState([]);
-
-    const handleEmotionDetected = useCallback((emotion) => {
-      console.log('Detected emotion (camera):', emotion);
-      setEmotionLog(prevLog => [
-        ...prevLog,
-        { emotion, timestamp: new Date().toISOString() }
-      ]);
-    }, []);
-
-  // Auto-save simulation: auto-save every 30 seconds
-  useEffect(() => {
-    const autoSaveInterval = setInterval(() => {
-      handleAutoSave();
-    }, 30000);
-    return () => clearInterval(autoSaveInterval);
-    // eslint-disable-next-line
-  }, [title, content, tags, mediaFiles, date]);
-
-  const handleAutoSave = async () => {
-    console.log("Auto-saving draft...");
-    // Optionally, implement auto-save to backend here
-  };
-
-  const handleMediaUpload = (e) => {
-    const files = Array.from(e.target.files);
-    setMediaFiles([...mediaFiles, ...files]);
-  };
-
-  const fetchGeolocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        setGeolocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-      });
-    } else {
-      alert("Geolocation is not supported by this browser.");
-    }
-  };
+  const [emotionLog, setEmotionLog] = useState([]);
+  const [recording, setRecording] = useState(false);
 
   const handleSave = async () => {
-    // Add debug logs here
-    console.log("Emotion log before save:", emotionLog);
-    console.log("Entry data to be saved:", {
+    const entryData = {
       title,
       content,
-      tags,
-      date: date.toLocaleString(),
-      geolocation,
-      weather,
-      mediaFiles: mediaFiles.map(file => file.name),
+      date: new Date().toLocaleString(),
       emotionalContext: {
         tone: emotionLog.length > 0 ? emotionLog[emotionLog.length - 1].emotion : "Not provided",
+        recommendations: [],
         faceLog: emotionLog,
       },
-    });
-  
+    };
+
     try {
-      const entryData = {
-        title,
-        content,
-        tags,
-        date: date.toLocaleString(),
-        geolocation,
-        weather,
-        mediaFiles: mediaFiles.map(file => file.name),
-        emotionalContext: {
-          tone: emotionLog.length > 0 ? emotionLog[emotionLog.length - 1].emotion : "Not provided",
-          // recommendations: [],
-          log: emotionLog,
-        },
-      };
-  
-      const response = await axios.post("/api/journal", entryData);
+      const response = await axios.post('/api/journal', entryData);
       if (response.status === 201) {
-        setTitle("");
-        setContent("");
-        setTags("");
-        setMediaFiles([]);
-        setGeolocation(null);
-        setWeather(null);
-        setEmotionLog([]); // Clear the emotion log after saving
+        // Reset fields after saving
+        setTitle('');
+        setContent('');
+        setEmotionLog([]);
       }
     } catch (error) {
       console.error("Error saving entry:", error);
@@ -110,178 +37,126 @@ const Journal = ({ username }) => {
     }
   };
 
+  const handleMicClick = () => {
+    // Placeholder for voice-to-text or recording feature
+    console.log("Mic button clicked! (Voice recording not implemented yet.)");
+    setRecording(!recording);
+  };
 
   return (
     <div style={styles.container}>
-      <div style={styles.mainContent}>
-        <h2>Journal Entry</h2>
-        <p>Hello, {username}. Start capturing your thoughts.</p>
+      <h2 style={styles.header}>New Journal Entry</h2>
 
-        {/* Entry Title */}
+      <div style={styles.inputGroup}>
+        <label style={styles.label}>Title</label>
         <input 
-          type="text" 
-          placeholder="Entry Title" 
+          type="text"
+          placeholder="Your entry title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          style={styles.input}
+          style={styles.titleInput}
         />
+      </div>
 
-        {/* Date & Time */}
-        <div style={styles.date}>
-          <span>Date: {date.toLocaleString()}</span>
-          <button onClick={() => setDate(new Date())} style={styles.buttonSmall}>
-            Update Date
-          </button>
-        </div>
+      <div style={styles.editorGroup}>
+        <label style={styles.label}>Content</label>
+        <ReactQuill 
+          value={content}
+          onChange={setContent}
+          placeholder="Write your thoughts here..."
+          style={styles.editor}
+        />
+      </div>
 
-        {/* Rich Text Editor / Preview */}
-        <div style={styles.editorSection}>
-          { previewMode ? (
-            <div style={styles.preview} dangerouslySetInnerHTML={{__html: content}} />
-          ) : (
-            <ReactQuill 
-              value={content}
-              onChange={setContent}
-              placeholder="Write your thoughts here..."
-              style={styles.editor}
-            />
-          )}
-        </div>
-
-        {/* Tagging / Categorization */}
-        <div style={styles.formRow}>
-          <label style={styles.label}>Tags:</label>
-          <input 
-            type="text" 
-            placeholder="e.g., work, personal" 
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            style={styles.input}
-          />
-        </div>
-
-        {/* Media Uploads */}
-        <div style={styles.formRow}>
-          <label style={styles.label}>Media:</label>
-          <input type="file" multiple onChange={handleMediaUpload} style={styles.input} />
-        </div>
-
-        {/* Geolocation */}
-        <div style={styles.formRow}>
-          <button onClick={fetchGeolocation} style={styles.button}>
-            Fetch Geolocation
-          </button>
-          { geolocation && (
-            <span style={{ marginLeft: '10px' }}>
-              Lat: {geolocation.latitude.toFixed(2)}, Lon: {geolocation.longitude.toFixed(2)}
-            </span>
-          )}
-        </div>
-
-        {/* Preview Mode Toggle */}
-        <div style={styles.formRow}>
-          <button onClick={() => setPreviewMode(!previewMode)} style={styles.button}>
-            {previewMode ? "Edit Mode" : "Preview Mode"}
-          </button>
-        </div>
-
-
-        {/* Save Entry Button */} 
+      <div style={styles.actionsRow}>
+        <button onClick={handleMicClick} style={styles.micButton}>
+          <FaMicrophone size={20} />
+        </button>
         <button onClick={handleSave} style={styles.saveButton}>
           Save Entry
         </button>
-
-                {/* Camera- sed emotion analysis */}
-       {/* Integrate the camera component for continuous emotion capture */}
-      <FaceApiEmotionAnalysis onEmotionDetected={handleEmotionDetected} />
-
-        {/* Display the captured emotion log */}
-      {emotionLog.length > 0 && (
-        <div style={styles.emotionLogContainer}>
-          <h3>Emotion Log During Session:</h3>
-          {emotionLog.map((log, index) => (
-            <p key={index} style={styles.emotionLogItem}>
-              {new Date(log.timestamp).toLocaleTimeString()}: {log.emotion}
-            </p>
-          ))}
-        </div>
-      )}
       </div>
 
-      
+      <div style={styles.cameraContainer}>
+        <FaceApiEmotionAnalysis onEmotionDetected={(emotion) => {
+          console.log("Detected emotion:", emotion);
+          setEmotionLog([...emotionLog, { emotion, timestamp: new Date().toISOString() }]);
+        }} />
+      </div>
     </div>
   );
 };
 
 const styles = {
   container: {
-    display: 'flex',
-    flexDirection: 'row',
+    maxWidth: '600px',
+    margin: '0 auto',
     padding: '20px',
+    fontFamily: "'Roboto', sans-serif",
   },
-  mainContent: {
-    flex: 1,
-    marginRight: '300px', // Reserve space for the sidebar
+  header: {
+    textAlign: 'center',
+    fontSize: '24px',
+    marginBottom: '20px',
+    color: '#333',
   },
-  input: {
+  inputGroup: {
+    marginBottom: '15px',
+  },
+  label: {
+    display: 'block',
+    marginBottom: '6px',
+    fontSize: '16px',
+    fontWeight: '500',
+    color: '#555',
+  },
+  titleInput: {
     width: '100%',
     padding: '10px',
-    marginBottom: '10px',
     fontSize: '16px',
+    borderRadius: '5px',
+    border: '1px solid #ccc',
+    outline: 'none',
   },
-  date: {
-    marginBottom: '10px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  editorSection: {
-    marginBottom: '70px',
+  editorGroup: {
+    marginBottom: '15px',
   },
   editor: {
-    height: '300px',
-    marginBottom: '10px',
+    minHeight: '200px',
+    borderRadius: '5px',
   },
-  preview: {
-    height: '300px',
-    border: '1px solid #ccc',
-    padding: '10px',
-    overflowY: 'auto',
-  },
-  formRow: {
+  actionsRow: {
     display: 'flex',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '20px',
   },
-  label: {
-    minWidth: '60px',
-    marginRight: '10px',
-  },
-  button: {
-    padding: '10px 15px',
+  micButton: {
     backgroundColor: '#1976d2',
-    color: '#fff',
     border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    marginRight: '10px',
-  },
-  buttonSmall: {
-    padding: '5px 10px',
-    backgroundColor: '#1976d2',
+    borderRadius: '50%',
+    width: '50px',
+    height: '50px',
     color: '#fff',
-    border: 'none',
-    borderRadius: '5px',
     cursor: 'pointer',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    outline: 'none',
   },
   saveButton: {
-    padding: '10px 20px',
-    backgroundColor: 'green',
-    color: '#fff',
+    backgroundColor: '#4caf50',
     border: 'none',
     borderRadius: '5px',
-    cursor: 'pointer',
+    padding: '12px 20px',
     fontSize: '16px',
+    color: '#fff',
+    cursor: 'pointer',
+    outline: 'none',
+  },
+  cameraContainer: {
+    marginTop: '20px',
+    textAlign: 'center',
   },
 };
 
